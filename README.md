@@ -11,7 +11,7 @@ No new hardware. No WMS migration. Just the exports you already have.
 
 <br>
 
-![Status](https://img.shields.io/badge/status-planning-ffb454?style=flat-square)
+![Status](https://img.shields.io/badge/status-local%20build-FF4B00?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776ab?style=flat-square&logo=python&logoColor=white)
 ![LLM](https://img.shields.io/badge/LLM%20on%20default%20path-none-3ddc97?style=flat-square)
 ![License](https://img.shields.io/badge/license-not%20yet%20specified-lightgrey?style=flat-square)
@@ -28,7 +28,7 @@ No new hardware. No WMS migration. Just the exports you already have.
 <br>
 
 > [!NOTE]
-> **Status:** this repository currently contains the [build plan](BUILD_PLAN.md). The layout and commands below describe the target implementation. Nothing is shipped yet.
+> **Status:** the local application and synthetic evaluation are runnable. Benchmark gates and results are reported in the Trust page and in [the latest results](eval/results/latest/RESULTS.md). Field validation is pending.
 
 ## Why this exists
 
@@ -131,15 +131,13 @@ Every number in that object is traceable to the input data or the replay, and ev
 | Language | Python 3.11+ |
 | Contracts | pydantic v2 |
 | Data and math | pandas, numpy, scipy, scikit-learn |
-| Optimization | PuLP / CBC |
+| Optimization | PuLP / CBC when installed, SciPy / HiGHS fallback |
 | Ingest | openpyxl, rapidfuzz |
-| Dashboard | Streamlit |
+| Dashboard | Flask, Jinja and browser JavaScript |
 | Testing | pytest |
 | LLM | none on the default or demo path |
 
 ## Repository layout
-
-Planned:
 
 ```text
 autopsy/
@@ -149,7 +147,7 @@ autopsy/
 ├── engine/      replay, repair operators, scoring, assignment,
 │                calibration, checks, hotspots, feedback
 ├── narrator/    deterministic autopsy text, optional LLM + validator
-├── app/         Streamlit dashboard (Upload, Discrepancies, Autopsy,
+├── app/         Local dashboard (Upload, Discrepancies, Autopsy,
 │                Hotspots, Trust)
 ├── eval/        one-command eval harness, metrics, baselines, ablations
 ├── fixtures/    committed tier + messy + fake-evidence fixtures
@@ -158,9 +156,6 @@ autopsy/
 ```
 
 ## Getting started
-
-> [!IMPORTANT]
-> These commands describe the target implementation and will work once the build lands.
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
@@ -195,11 +190,11 @@ python -m eval.run_all
 
 **Launch the dashboard**
 
-The dashboard is built fake-JSON-first and is never blocked on engine progress.
-
 ```bash
-streamlit run app/Home.py
+python -m app.Home
 ```
+
+Open http://127.0.0.1:5000. The first screen loads a synthetic warehouse. To try the full import, upload `fixtures/tier2.xlsx` or one of the messy fixtures, review the mapped fields and select **Confirm & analyze**. Uploaded runs are held in the local server process. Feedback is appended to `data/feedback.jsonl` and can be disabled with `AUTOPSY_FEEDBACK=0`.
 
 ## Evaluation and trust
 

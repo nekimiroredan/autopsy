@@ -1,0 +1,18 @@
+Record Type,txn_id,ts,item,location,qty_delta,event_type,doc_no,worker,shift,count_id,count_ts,counted_qty
+Movement,0001,2025-03-02T07:21:00,SKU-123,B-12,30,receive,R-101,W-01,Morning,,,
+Movement,0002,2025-03-02T08:32:00,SKU-123,B-12,110,receive,R-102,W-02,Morning,,,
+Movement,0003,2025-03-03T14:30:00,SKU-123,B-12,-10,pick,P-101,W-01,Evening,,,
+Movement,0004,2025-03-03T16:45:00,SKU-456,A-02,-12,pick,P-102,W-03,Evening,,,
+Movement,0005,2025-03-03T16:46:00,SKU-456,A-02,-12,pick,P-102,W-03,Evening,,,
+Movement,0006,2025-03-03T09:25:00,SKU-789,C-05,20,receive,R-104,W-02,Morning,,,
+Movement,0007,2025-03-04T10:30:00,SKU-789,C-03,5,return,R-105,W-02,Morning,,,
+Movement,0008,2025-03-04T10:32:00,SKU-013,D-01,7,receive,R-106,W-03,Morning,,,
+Count,,,SKU-123,B-12,,,,,,C-01,2025-03-01T17:00:00,10
+Count,,,SKU-123,B-12,,,,,,C-02,2025-03-07T17:00:00,40
+Count,,,SKU-456,A-02,,,,,,C-03,2025-03-01T17:00:00,70
+Count,,,SKU-456,A-02,,,,,,C-04,2025-03-07T17:00:00,58
+Count,,,SKU-789,C-03,,,,,,C-05,2025-03-01T17:00:00,15
+Count,,,SKU-789,C-03,,,,,,C-06,2025-03-07T17:00:00,40
+Count,,,SKU-789,C-05,,,,,,C-07,2025-03-01T17:00:00,10
+Count,,,SKU-789,C-05,,,,,,C-08,2025-03-07T17:00:00,10
+Count,,,SKU-013,D-01,,,,,,C-09,2025-03-07T17:00:00,27

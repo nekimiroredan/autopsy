@@ -1,0 +1,18 @@
+Record Type;Movement Ref;Txn Date;SKU;Bin;Qty Received;Qty Issued;Activity;GRN;Operator;Team Shift;Cycle Count ID;Count Date;Physical Qty
+Movement;0001;02/03/2025 07:21;SKU-123;B-12;30;0;receive;R-101;W-01;Morning;;;
+Movement;0002;02/03/2025 08:32;SKU-123;B-12;110;0;receive;R-102;W-02;Morning;;;
+Movement;0003;03/03/2025 14:30;SKU-123;B-12;0;10;pick;P-101;W-01;Evening;;;
+Movement;0004;03/03/2025 16:45;SKU-456;A-02;0;12;pick;P-102;W-03;Evening;;;
+Movement;0005;03/03/2025 16:46;SKU-456;A-02;0;12;pick;P-102;W-03;Evening;;;
+Movement;0006;03/03/2025 09:25;SKU-789;C-05;20;0;receive;R-104;W-02;Morning;;;
+Movement;0007;04/03/2025 10:30;SKU-789;C-03;5;0;return;R-105;W-02;Morning;;;
+Movement;0008;04/03/2025 10:32;SKU-013;D-01;7;0;receive;R-106;W-03;Morning;;;
+Count;;;SKU-123;B-12;;;;;;;C-01;01/03/2025 17:00;10
+Count;;;SKU-123;B-12;;;;;;;C-02;07/03/2025 17:00;40
+Count;;;SKU-456;A-02;;;;;;;C-03;01/03/2025 17:00;70
+Count;;;SKU-456;A-02;;;;;;;C-04;07/03/2025 17:00;58
+Count;;;SKU-789;C-03;;;;;;;C-05;01/03/2025 17:00;15
+Count;;;SKU-789;C-03;;;;;;;C-06;07/03/2025 17:00;40
+Count;;;SKU-789;C-05;;;;;;;C-07;01/03/2025 17:00;10
+Count;;;SKU-789;C-05;;;;;;;C-08;07/03/2025 17:00;10
+Count;;;SKU-013;D-01;;;;;;;C-09;07/03/2025 17:00;27

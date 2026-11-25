@@ -1,0 +1,43 @@
+{
+  "tier": 1,
+  "coverage": {
+    "doc_no": 1.0,
+    "worker": 1.0,
+    "shift": 1.0,
+    "unit_cost": 0.0,
+    "pack_size": 0.0,
+    "similar_group": 0.0,
+    "location_zone": 0.0,
+    "item_master": 0.0
+  },
+  "rows_read": {
+    "movement": 8,
+    "count": 9,
+    "master": 0
+  },
+  "rows_kept": {
+    "movement": 8,
+    "count": 9,
+    "master": 0
+  },
+  "rows_dropped": {
+    "movement": 0,
+    "count": 0,
+    "master": 0
+  },
+  "drops": {},
+  "warnings": [],
+  "details": {
+    "count_items_without_movements": 0,
+    "count_keys_without_movements": 0,
+    "count_key_overlap": 1.0,
+    "movement_rows_with_unknown_items": 0,
+    "movement_rows_with_unknown_locations": 0,
+    "duplicate_doc_no": 1,
+    "missing_doc_no_rate": 0.0,
+    "duplicate_count_timestamps": 0,
+    "negative_balance_keys": 0,
+    "duplicate_txn_id": 0,
+    "duplicate_count_id": 0
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "simulations": [
+    {
+      "simulation": 1,
+      "rounds": [
+        {
+          "round": 1,
+          "labels": 20,
+          "accuracy": 0.6440678
+        },
+        {
+          "round": 2,
+          "labels": 40,
+          "accuracy": 0.66101695
+        },
+        {
+          "round": 3,
+          "labels": 60,
+          "accuracy": 0.62711864
+        },
+        {
+          "round": 4,
+          "labels": 80,
+          "accuracy": 0.6440678
+        },
+        {
+          "round": 5,
+          "labels": 100,
+          "accuracy": 0.72881356
+        }
+      ]
+    },
+    {
+      "simulation": 2,
+      "rounds": [
+        {
+          "round": 1,
+          "labels": 20,
+          "accuracy": 0.66101695
+        },
+        {
+          "round": 2,
+          "labels": 40,
+          "accuracy": 0.71186441
+        },
+        {
+          "round": 3,
+          "labels": 60,
+          "accuracy": 0.6779661
+        },
+        {
+          "round": 4,
+          "labels": 80,
+          "accuracy": 0.69491525
+        },
+        {
+          "round": 5,
+          "labels": 100,
+          "accuracy": 0.69491525
+        }
+      ]
+    },
+    {
+      "simulation": 3,
+      "rounds": [
+        {
+          "round": 1,
+          "labels": 20,
+          "accuracy": 0.72881356
+        },
+        {
+          "round": 2,
+          "labels": 40,
+          "accuracy": 0.77966102
+        },
+        {
+          "round": 3,
+          "labels": 60,
+          "accuracy": 0.76271186
+        },
+        {
+          "round": 4,
+          "labels": 80,
+          "accuracy": 0.71186441
+        },
+        {
+          "round": 5,
+          "labels": 100,
+          "accuracy": 0.71186441
+        }
+      ]
+    },
+    {
+      "simulation": 4,
+      "rounds": [
+        {
+          "round": 1,
+          "labels": 20,
+          "accuracy": 0.52542373
+        },
+        {
+          "round": 2,
+          "labels": 40,
+          "accuracy": 0.57627119
+        },
+        {
+          "round": 3,
+          "labels": 60,
+          "accuracy": 0.59322034
+        },
+        {
+          "round": 4,
+          "labels": 80,
+          "accuracy": 0.61016949
+        },
+        {
+          "round": 5,
+          "labels": 100,
+          "accuracy": 0.62711864
+        }
+      ]
+    },
+    {
+      "simulation": 5,
+      "rounds": [
+        {
+          "round": 1,
+          "labels": 20,
+          "accuracy": 0.74576271
+        },
+        {
+          "round": 2,
+          "labels": 40,
+          "accuracy": 0.74576271
+        },
+        {
+          "round": 3,
+          "labels": 60,
+          "accuracy": 0.71186441
+        },
+        {
+          "round": 4,
+          "labels": 80,
+          "accuracy": 0.69491525
+        },
+        {
+          "round": 5,
+          "labels": 100,
+          "accuracy": 0.71186441
+        }
+      ]
+    }
+  ],
+  "improved": 3,
+  "target": 3,
+  "pass": true,
+  "label_reliability": 0.8,
+  "interpretation": "Five independent noise schedules. Capped prior updates and noisy labels can limit gains on the fixed holdout."
+}

@@ -1,1 +1,8 @@
 BUILD_PLAN.md
+
+__pycache__/
+.pytest_cache/
+.venv/
+data/
+demo/mapping_cache.json
+demo/feedback_backup.json

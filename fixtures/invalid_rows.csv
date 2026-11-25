@@ -1,0 +1,8 @@
+Record Type,txn_id,ts,item,location,qty_delta,event_type,doc_no,worker,shift,count_id,count_ts,counted_qty
+Movement,0001,2025-03-02T07:21:00,SKU-123,B-12,30,receive,R-101,W-01,Morning,,,
+Movement,0001,2025-03-02T07:21:00,SKU-123,B-12,30,receive,R-101,W-01,Morning,,,
+Movement,x2,broken,SKU-123,B-12,20,receive,,,,,,
+Movement,x3,2025-03-02T07:21:00,SKU-123,B-12,Oops,receive,,,,,,
+Movement,x4,2025-03-02T07:21:00,SKU-123,B-12,20,Unrecognized,,,,,,
+Count,,,SKU-123,B-12,,,,,,C-01,2025-03-01T17:00:00,10
+Count,,,SKU-123,B-12,,,,,,C-02,2025-03-07T17:00:00,40

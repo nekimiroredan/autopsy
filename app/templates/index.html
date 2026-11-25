@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="{{ locale }}" dir="{{ 'rtl' if rtl else 'ltr' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#121212">
+<title>Autopsy · {{ t['ui.brand'] }}</title>
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script id="messages" type="application/json">{{ t | tojson }}</script>
+<script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+<a class="skip" href="#main">{{ t['ui.skip'] }}</a>
+<aside class="sidebar">
+  <a class="brand" href="#overview"><span class="brand-icon" data-icon="brand"></span><span>AUTOPSY<span class="brand-dot">.</span><small>{{ t['ui.brand'] }}</small></span></a>
+  <div class="nav-section"><p>{{ t['ui.workspace'] }}</p>
+    {% for page, icon in [('overview', 'grid'), ('upload', 'upload'), ('discrepancies', 'scan'), ('autopsy', 'target'), ('hotspots', 'activity'), ('trust', 'shield'), ('experiment', 'activity')] %}
+    <a href="#{{ page }}" data-page="{{ page }}"><span data-icon="{{ icon }}"></span> {{ t['page.' ~ page] }}</a>
+    {% endfor %}
+  </div>
+  <div class="sidebar-bottom">
+    <div class="source-note"><span class="status-dot"></span><div><b id="sidebar-source">{{ t['source.demo'] }}</b><small id="sidebar-detail">{{ t['ui.workspace'] }}</small></div></div>
+  </div>
+</aside>
+<div class="workspace">
+  <header class="topbar">
+    <div class="breadcrumb"><button id="menu" class="icon-button" aria-label="{{ t['ui.navigation'] }}" data-icon="menu"></button><span>{{ t['ui.workspace'] }}</span><span class="slash">/</span><strong id="breadcrumb">{{ t['page.overview'] }}</strong></div>
+    <div class="header-controls">
+      <div id="header-source" class="chip"><span class="status-dot"></span> {{ t['ui.synthetic'] }}</div>
+      <select id="language" aria-label="{{ t['ui.language'] }}">
+        {% for code, name in languages.items() %}<option value="{{ code }}" lang="{{ code }}"{% if code == locale %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </div>
+  </header>
+  <main id="main" tabindex="-1"><p class="empty">{{ t['ui.loading'] }}</p></main>
+</div>
+<div id="toast" role="status"></div>
+</body>
+</html>

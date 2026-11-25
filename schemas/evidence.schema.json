@@ -1,0 +1,438 @@
+{
+  "$defs": {
+    "EditOp": {
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "enum": [
+            "delete",
+            "insert",
+            "set_field",
+            "set_count",
+            "book_loss"
+          ],
+          "title": "Op",
+          "type": "string"
+        },
+        "txn_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Txn Id"
+        },
+        "count_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Count Id"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From"
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "To"
+        },
+        "txn": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Movement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "qty": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Qty"
+        },
+        "window_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Window Id"
+        }
+      },
+      "required": [
+        "op"
+      ],
+      "title": "EditOp",
+      "type": "object"
+    },
+    "Hypothesis": {
+      "additionalProperties": false,
+      "properties": {
+        "cause": {
+          "enum": [
+            "double_scan",
+            "missed_scan",
+            "qty_typo",
+            "unit_mismatch",
+            "item_swap",
+            "wrong_location",
+            "miscount",
+            "cutoff_timing",
+            "residual_shrink",
+            "opening_balance"
+          ],
+          "title": "Cause",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "repair": {
+          "$ref": "#/$defs/Repair"
+        },
+        "likelihood_ratio": {
+          "title": "Likelihood Ratio",
+          "type": "number"
+        },
+        "search_space": {
+          "title": "Search Space",
+          "type": "integer"
+        },
+        "competing_matches": {
+          "title": "Competing Matches",
+          "type": "integer"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "cause",
+        "confidence",
+        "repair",
+        "likelihood_ratio",
+        "search_space",
+        "competing_matches",
+        "evidence"
+      ],
+      "title": "Hypothesis",
+      "type": "object"
+    },
+    "Movement": {
+      "additionalProperties": false,
+      "properties": {
+        "txn_id": {
+          "title": "Txn Id",
+          "type": "string"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "item": {
+          "title": "Item",
+          "type": "string"
+        },
+        "location": {
+          "title": "Location",
+          "type": "string"
+        },
+        "qty_delta": {
+          "title": "Qty Delta",
+          "type": "number"
+        },
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "doc_no": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Doc No"
+        },
+        "worker": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Worker"
+        },
+        "shift": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shift"
+        }
+      },
+      "required": [
+        "txn_id",
+        "ts",
+        "item",
+        "location",
+        "qty_delta",
+        "event_type"
+      ],
+      "title": "Movement",
+      "type": "object"
+    },
+    "Repair": {
+      "additionalProperties": false,
+      "properties": {
+        "ops": {
+          "items": {
+            "$ref": "#/$defs/EditOp"
+          },
+          "minItems": 1,
+          "title": "Ops",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ops"
+      ],
+      "title": "Repair",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "item": {
+      "title": "Item",
+      "type": "string"
+    },
+    "location": {
+      "title": "Location",
+      "type": "string"
+    },
+    "window": {
+      "maxItems": 2,
+      "minItems": 2,
+      "prefixItems": [
+        {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        {
+          "format": "date-time",
+          "type": "string"
+        }
+      ],
+      "title": "Window",
+      "type": "array"
+    },
+    "tier": {
+      "enum": [
+        0,
+        1,
+        2
+      ],
+      "title": "Tier",
+      "type": "integer"
+    },
+    "anchored": {
+      "title": "Anchored",
+      "type": "boolean"
+    },
+    "expected": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expected"
+    },
+    "counted": {
+      "title": "Counted",
+      "type": "number"
+    },
+    "gap": {
+      "title": "Gap",
+      "type": "number"
+    },
+    "value_at_risk": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Value At Risk"
+    },
+    "abstain": {
+      "title": "Abstain",
+      "type": "boolean"
+    },
+    "hypotheses": {
+      "items": {
+        "$ref": "#/$defs/Hypothesis"
+      },
+      "title": "Hypotheses",
+      "type": "array"
+    },
+    "check_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Check Id"
+    },
+    "suggested_check": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Suggested Check"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    },
+    "calibrated": {
+      "default": false,
+      "title": "Calibrated",
+      "type": "boolean"
+    },
+    "cascades": {
+      "default": false,
+      "title": "Cascades",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "item",
+    "location",
+    "window",
+    "tier",
+    "anchored",
+    "expected",
+    "counted",
+    "gap",
+    "value_at_risk",
+    "abstain",
+    "hypotheses"
+  ],
+  "title": "EvidenceObject",
+  "type": "object"
+}

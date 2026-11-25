@@ -1,0 +1,195 @@
+{
+  "counts": {
+    "C-01": [
+      "2025-03-01T17:00:00",
+      10.0
+    ],
+    "C-02": [
+      "2025-03-07T17:00:00",
+      40.0
+    ],
+    "C-03": [
+      "2025-03-01T17:00:00",
+      70.0
+    ],
+    "C-04": [
+      "2025-03-07T17:00:00",
+      58.0
+    ],
+    "C-05": [
+      "2025-03-01T17:00:00",
+      15.0
+    ],
+    "C-06": [
+      "2025-03-07T17:00:00",
+      40.0
+    ],
+    "C-07": [
+      "2025-03-01T17:00:00",
+      10.0
+    ],
+    "C-08": [
+      "2025-03-07T17:00:00",
+      10.0
+    ],
+    "C-09": [
+      "2025-03-07T17:00:00",
+      27.0
+    ]
+  },
+  "mapping": {
+    "count": {
+      "count_id": {
+        "column": "Cycle Count ID",
+        "confidence": 0.98
+      },
+      "count_ts": {
+        "column": "Count Date",
+        "confidence": 0.98
+      },
+      "counted_qty": {
+        "column": "Physical Qty",
+        "confidence": 0.98
+      },
+      "item": {
+        "column": "SKU",
+        "confidence": 0.98
+      },
+      "location": {
+        "column": "Bin",
+        "confidence": 0.98
+      }
+    },
+    "movement": {
+      "doc_no": {
+        "column": "GRN",
+        "confidence": 0.98
+      },
+      "event_type": {
+        "column": "Activity",
+        "confidence": 0.98
+      },
+      "item": {
+        "column": "SKU",
+        "confidence": 0.98
+      },
+      "location": {
+        "column": "Bin",
+        "confidence": 0.98
+      },
+      "qty_delta": {
+        "column": "Qty",
+        "confidence": 0.98
+      },
+      "qty_in": {
+        "column": null,
+        "confidence": 0.0
+      },
+      "qty_out": {
+        "column": null,
+        "confidence": 0.0
+      },
+      "shift": {
+        "column": "Team Shift",
+        "confidence": 0.98
+      },
+      "ts": {
+        "column": "Txn Date",
+        "confidence": 0.98
+      },
+      "txn_id": {
+        "column": "Movement Ref",
+        "confidence": 0.98
+      },
+      "worker": {
+        "column": "Operator",
+        "confidence": 0.98
+      }
+    }
+  },
+  "movements": {
+    "0001": [
+      "2025-03-02T07:21:00",
+      30.0,
+      "receive"
+    ],
+    "0002": [
+      "2025-03-02T08:32:00",
+      110.0,
+      "receive"
+    ],
+    "0003": [
+      "2025-03-03T14:30:00",
+      -10.0,
+      "pick"
+    ],
+    "0004": [
+      "2025-03-03T16:45:00",
+      -12.0,
+      "pick"
+    ],
+    "0005": [
+      "2025-03-03T16:46:00",
+      -12.0,
+      "pick"
+    ],
+    "0006": [
+      "2025-03-03T09:25:00",
+      20.0,
+      "receive"
+    ],
+    "0007": [
+      "2025-03-04T10:30:00",
+      5.0,
+      "return"
+    ],
+    "0008": [
+      "2025-03-04T10:32:00",
+      7.0,
+      "receive"
+    ]
+  },
+  "report": {
+    "coverage": {
+      "doc_no": 1.0,
+      "item_master": 0.0,
+      "location_zone": 0.0,
+      "pack_size": 0.0,
+      "shift": 1.0,
+      "similar_group": 0.0,
+      "unit_cost": 0.0,
+      "worker": 1.0
+    },
+    "details": {
+      "count_items_without_movements": 0,
+      "count_key_overlap": 1.0,
+      "count_keys_without_movements": 0,
+      "duplicate_count_id": 0,
+      "duplicate_count_timestamps": 0,
+      "duplicate_doc_no": 1,
+      "duplicate_txn_id": 0,
+      "missing_doc_no_rate": 0.0,
+      "movement_rows_with_unknown_items": 0,
+      "movement_rows_with_unknown_locations": 0,
+      "negative_balance_keys": 0
+    },
+    "drops": {},
+    "rows_dropped": {
+      "count": 0,
+      "master": 0,
+      "movement": 0
+    },
+    "rows_kept": {
+      "count": 9,
+      "master": 0,
+      "movement": 8
+    },
+    "rows_read": {
+      "count": 9,
+      "master": 0,
+      "movement": 8
+    },
+    "tier": 1,
+    "warnings": []
+  }
+}

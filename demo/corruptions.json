@@ -1,0 +1,122 @@
+[
+  {
+    "id": "C1",
+    "kind": "double_scan",
+    "item": "D2-SKU-501",
+    "location": "A-02",
+    "window": [
+      "2025-03-09T18:05:00",
+      "2025-03-13T18:05:00"
+    ],
+    "source_file_line": 948,
+    "what_changed": "duplicated a -8 posting",
+    "expected_gap": 8.0,
+    "dir": "demo/corrupted/C1"
+  },
+  {
+    "id": "C2",
+    "kind": "qty_typo",
+    "item": "D3-SKU-502",
+    "location": "B-13",
+    "window": [
+      "2025-03-06T18:05:00",
+      "2025-03-11T18:05:00"
+    ],
+    "source_file_line": 1842,
+    "what_changed": "6 became 60 (extra zero)",
+    "expected_gap": -54.0,
+    "dir": "demo/corrupted/C2"
+  },
+  {
+    "id": "C3",
+    "kind": "missed_scan",
+    "item": "D2-SKU-506",
+    "location": "B-12",
+    "window": [
+      "2025-03-17T18:05:00",
+      "2025-03-21T18:05:00"
+    ],
+    "source_file_line": 1460,
+    "what_changed": "deleted a -8 posting",
+    "expected_gap": -8.0,
+    "dir": "demo/corrupted/C3"
+  },
+  {
+    "id": "C4",
+    "kind": "wrong_location",
+    "item": "D1-SKU-503",
+    "location": "B-12",
+    "window": [
+      "2025-03-16T18:05:00",
+      "2025-03-21T18:05:00"
+    ],
+    "source_file_line": 396,
+    "what_changed": "8 posted to A-02 instead",
+    "expected_gap": 8.0,
+    "dir": "demo/corrupted/C4",
+    "mirror_gap": {
+      "location": "A-02",
+      "gap": -8.0
+    }
+  },
+  {
+    "id": "C5",
+    "kind": "double_scan",
+    "item": "D1-SKU-500",
+    "location": "A-02",
+    "window": [
+      "2025-03-01T18:05:00",
+      "2025-03-05T18:05:00"
+    ],
+    "source_file_line": 10,
+    "what_changed": "duplicated a -10 posting",
+    "expected_gap": 10.0,
+    "dir": "demo/corrupted/C5"
+  },
+  {
+    "id": "C6",
+    "kind": "qty_typo",
+    "item": "D2-SKU-507",
+    "location": "B-13",
+    "window": [
+      "2025-03-13T18:05:00",
+      "2025-03-17T18:05:00"
+    ],
+    "source_file_line": 1541,
+    "what_changed": "-13 became -130 (extra zero)",
+    "expected_gap": 117.0,
+    "dir": "demo/corrupted/C6"
+  },
+  {
+    "id": "C7",
+    "kind": "missed_scan",
+    "item": "D2-SKU-503",
+    "location": "B-13",
+    "window": [
+      "2025-03-16T18:05:00",
+      "2025-03-21T18:05:00"
+    ],
+    "source_file_line": 1181,
+    "what_changed": "deleted a 8 posting",
+    "expected_gap": 8.0,
+    "dir": "demo/corrupted/C7"
+  },
+  {
+    "id": "C8",
+    "kind": "wrong_location",
+    "item": "D1-SKU-507",
+    "location": "B-12",
+    "window": [
+      "2025-03-29T18:05:00",
+      "2025-03-31T18:05:00"
+    ],
+    "source_file_line": 787,
+    "what_changed": "5 posted to A-01 instead",
+    "expected_gap": 5.0,
+    "dir": "demo/corrupted/C8",
+    "mirror_gap": {
+      "location": "A-01",
+      "gap": -5.0
+    }
+  }
+]

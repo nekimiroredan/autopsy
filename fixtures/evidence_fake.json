@@ -1,0 +1,157 @@
+[
+  {
+    "id": "D-7f3a91",
+    "item": "SKU123",
+    "location": "B-12",
+    "window": [
+      "2025-03-01T00:00:00",
+      "2025-03-14T23:59:59"
+    ],
+    "tier": 2,
+    "anchored": true,
+    "expected": 140,
+    "counted": 40,
+    "gap": -100,
+    "value_at_risk": 1240.0,
+    "abstain": false,
+    "hypotheses": [
+      {
+        "cause": "qty_typo",
+        "confidence": 0.71,
+        "repair": {
+          "ops": [
+            {
+              "op": "set_field",
+              "txn_id": "T-8812",
+              "field": "qty_delta",
+              "from": 110,
+              "to": 10
+            }
+          ]
+        },
+        "likelihood_ratio": 41.0,
+        "search_space": 41,
+        "competing_matches": 1,
+        "evidence": [
+          "Receive T-8812 logged 110; setting it to 10 closes the -100 gap exactly",
+          "This worker had 2 prior confirmed qty_typo labels"
+        ]
+      },
+      {
+        "cause": "missed_scan",
+        "confidence": 0.12,
+        "repair": {
+          "ops": [
+            {
+              "op": "insert",
+              "txn": {
+                "txn_id": "T-INSERT-8812",
+                "ts": "2025-03-12T14:03:00",
+                "item": "SKU123",
+                "location": "B-12",
+                "qty_delta": -100,
+                "event_type": "pick"
+              }
+            }
+          ]
+        },
+        "likelihood_ratio": 1.0,
+        "search_space": 42,
+        "competing_matches": 42,
+        "evidence": [
+          "No doc-number sequence gap near the window"
+        ]
+      },
+      {
+        "cause": "miscount",
+        "confidence": 0.17,
+        "repair": {
+          "ops": [
+            {
+              "op": "set_count",
+              "count_id": "C-2031",
+              "from": 40,
+              "to": 140
+            }
+          ]
+        },
+        "likelihood_ratio": 1.0,
+        "search_space": 1,
+        "competing_matches": 1,
+        "evidence": [
+          "The count is the only uncorroborated observation; fallback with low prior"
+        ]
+      }
+    ],
+    "check_id": "pull_receiving_doc",
+    "suggested_check": "Pull the receiving doc for T-8812; if it shows 10, not 110, the extra digit is confirmed",
+    "limitations": [],
+    "calibrated": false
+  },
+  {
+    "id": "D-1e7a33",
+    "item": "SKU238",
+    "location": "C-08",
+    "window": [
+      null,
+      "2025-03-14T23:59:59"
+    ],
+    "tier": 2,
+    "anchored": false,
+    "expected": null,
+    "counted": 62,
+    "gap": 0,
+    "value_at_risk": null,
+    "abstain": true,
+    "hypotheses": [],
+    "check_id": null,
+    "suggested_check": "Import the previous physical count for SKU238 in C-08.",
+    "limitations": [
+      "Opening balance unavailable."
+    ],
+    "calibrated": false
+  },
+  {
+    "id": "D-f35b12",
+    "item": "SKU188",
+    "location": "A-04",
+    "window": [
+      "2025-03-01T00:00:00",
+      "2025-03-14T23:59:59"
+    ],
+    "tier": 2,
+    "anchored": true,
+    "expected": 20,
+    "counted": 44,
+    "gap": 24,
+    "value_at_risk": 432,
+    "abstain": false,
+    "hypotheses": [
+      {
+        "cause": "wrong_location",
+        "confidence": 0.86,
+        "likelihood_ratio": 12,
+        "search_space": 12,
+        "competing_matches": 1,
+        "repair": {
+          "ops": [
+            {
+              "op": "set_field",
+              "txn_id": "T-504",
+              "field": "location",
+              "from": "A-06",
+              "to": "A-04"
+            }
+          ]
+        },
+        "evidence": [
+          "Reassigning T-504 closes the paired gaps in A-04 and A-06."
+        ]
+      }
+    ],
+    "check_id": "check_transfer_docs",
+    "suggested_check": "Match the transfer document for T-504 against bins A-04 and A-06.",
+    "limitations": [],
+    "calibrated": false
+  }
+]

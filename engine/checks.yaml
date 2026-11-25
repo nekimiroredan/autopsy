@@ -1,0 +1,37 @@
+recount_location:
+  effort: 1
+  causes: [missed_scan, residual_shrink, opening_balance]
+  instruction: "Recount {item} at {location}. If the recount equals the ledger balance, review the first count. If it matches the recorded count, inspect the movement trail."
+recount_pallet:
+  effort: 2
+  causes: [miscount]
+  instruction: "Recount each pallet of {item} at {location}. If the total equals the ledger balance, correct the recorded physical count."
+pull_pick_slip:
+  effort: 1
+  causes: [qty_typo, missed_scan]
+  document: true
+  event: pick
+  instruction: "Pull the pick slip for {txn} at {location}. Compare the recorded and actual quantities of {item}."
+pull_receiving_doc:
+  effort: 1
+  causes: [qty_typo, missed_scan]
+  document: true
+  event: receive
+  instruction: "Pull the receiving document for {txn} at {location}. Compare its quantity of {item} with the movement log."
+scan_audit:
+  effort: 2
+  causes: [double_scan, qty_typo, cutoff_timing]
+  instruction: "Audit scans for {item} at {location} around {txn}. Match each scan to a distinct physical movement and check the count cutoff."
+check_transfer_docs:
+  effort: 1
+  causes: [item_swap, wrong_location]
+  document: true
+  instruction: "Compare the source document for {txn} with both stock records. Verify where {item} was stored and the SKU that was handled."
+verify_pack_size:
+  effort: 1
+  causes: [unit_mismatch]
+  instruction: "Inspect a sealed pack of {item} at {location}. If the units per pack match the proposed conversion, review the scanner's unit setting."
+check_count_sheet:
+  effort: 2
+  causes: [miscount, cutoff_timing]
+  instruction: "Compare the count sheet for {item} at {location} with scan timestamps and the recorded quantity. Verify which movements occurred before the count."
