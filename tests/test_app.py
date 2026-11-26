@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 
 from app.Home import app
+from app import data_source
+from engine.replay import Replayer
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
@@ -19,6 +21,8 @@ def test_balance_replay_closes_demo_gap_without_changing_run():
     assert abs(result["after"]["gap"]) < 1e-6
     assert result["before"]["points"][-1]["quantity"] == case["counted"]
     assert result["edits"]
+    assert result["before"]["points"][-2]["ts"] == result["before"]["points"][-1]["ts"]
+    assert result["before"]["points"][-1]["quantity"] - result["before"]["points"][-2]["quantity"] == case["gap"]
     assert client.get(path + f"/{len(case['hypotheses'])}").status_code == 404
     assert client.get(url).get_json() == run
 
@@ -26,8 +30,13 @@ def test_balance_replay_closes_demo_gap_without_changing_run():
 def test_error_experiments_preserve_original_transactions():
     client = app.test_client()
     url = "/api/runs/demo"
+    before = client.get(url).get_json()
     rows = client.get(url + "/transactions").get_json()
-    txn = next(row for row in rows if row["qty_delta"])
+    run = data_source.get_run("demo")
+    replay = Replayer(run.movements, run.counts)
+    txn_id = next(txn_id for window in replay.windows() if window.anchored
+                  for txn_id in window.window_txn_ids if replay.movements[txn_id].qty_delta)
+    txn = next(row for row in rows if row["txn_id"] == txn_id)
     destination = next(row["location"] for row in rows if row["location"] != txn["location"])
     for kind in ("double_scan", "qty_typo", "wrong_location"):
         response = client.post(url + "/experiment", json={
@@ -35,10 +44,38 @@ def test_error_experiments_preserve_original_transactions():
         })
         assert response.status_code == 200
         result = response.get_json()
+        assert result["affected_windows"] >= 1
         assert result["detected"] == bool(result["cases"])
+        assert all(case["narrative"] for case in result["cases"])
     assert client.post(url + "/experiment", json={"kind": "unknown"}).status_code == 400
+    assert client.post(url + "/experiment", json={
+        "txn_id": txn_id, "kind": "wrong_location", "destination": txn["location"],
+    }).status_code == 400
+    assert client.post("/api/runs/unknown/experiment", json={}).status_code == 404
     assert client.get("/api/runs/unknown/transactions").status_code == 404
     assert client.get(url + "/transactions").get_json() == rows
+    assert client.get(url).get_json() == before
+
+
+def test_trust_reads_metrics_and_published_report(tmp_path, monkeypatch):
+    monkeypatch.setattr(data_source, "ROOT", tmp_path)
+    client = app.test_client()
+    assert client.get("/api/trust").get_json() is None
+    latest = tmp_path / "eval/results/latest"
+    latest.mkdir(parents=True)
+    points = {difficulty: [{"threshold": 0.778, "coverage": 0.25, "accuracy": 0.8, "support": 5}]
+              for difficulty in ("easy", "medium", "hard")}
+    metrics = {"coverage_at_threshold_by_difficulty": points, "coverage_curve": points["easy"]}
+    (latest / "results.json").write_text(json.dumps({"metrics": metrics}))
+    (latest / "RESULTS.md").write_text(
+        "# Evaluation\n\n## Gates\n\n| Hard improvement | Missed | -1.5% | 10.0% |\n"
+        "| Calibration | Pass | 2.7% | 8.0% |\n\n## Limitations\n\n"
+        "Offsetting errors can cancel.\n\n## Feedback simulation\nOther text.\n"
+    )
+    payload = client.get("/api/trust").get_json()
+    assert payload["metrics"] == metrics
+    assert payload["missed_gates"] == [{"name": "Hard improvement", "measured": "-1.5%", "target": "10.0%"}]
+    assert payload["limitations"] == ["Offsetting errors can cancel."]
 
 
 def test_dashboard_routes_and_demo():
@@ -80,3 +117,4 @@ def test_full_messy_upload():
     assert run["source"] == "Partial / adapted public data"
     assert run["cases"]
     assert all(row["value_at_risk"] is None for row in run["cases"])
+    assert run["shift_tiles"] == []

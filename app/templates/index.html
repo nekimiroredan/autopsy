@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#121212">
+<meta name="theme-color" content="#151515">
 <title>Autopsy · {{ t['ui.brand'] }}</title>
 <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -28,6 +28,7 @@
     <div class="breadcrumb"><button id="menu" class="icon-button" aria-label="{{ t['ui.navigation'] }}" data-icon="menu"></button><span>{{ t['ui.workspace'] }}</span><span class="slash">/</span><strong id="breadcrumb">{{ t['page.overview'] }}</strong></div>
     <div class="header-controls">
       <div id="header-source" class="chip"><span class="status-dot"></span> {{ t['ui.synthetic'] }}</div>
+      <output id="display-currency" class="chip" aria-live="polite"></output>
       <select id="language" aria-label="{{ t['ui.language'] }}">
         {% for code, name in languages.items() %}<option value="{{ code }}" lang="{{ code }}"{% if code == locale %} selected{% endif %}>{{ name }}</option>{% endfor %}
       </select>

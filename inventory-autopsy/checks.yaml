@@ -1,0 +1,22 @@
+version: 1
+checks:
+  - id: CHK_UOM_FACTOR
+    cause_code: UOM_MISMATCH
+    deterministic_rule: "variance_units > 0 and exists receipt where abs(variance_units) == receipt_qty * (factor - 1)"
+    severity: high
+  - id: CHK_DUP_DISPATCH
+    cause_code: DUPLICATE_DISPATCH
+    deterministic_rule: "variance_units > 0 and exists pair of dispatches with matching doc_ref or qty within 48h window"
+    severity: high
+  - id: CHK_UNPOSTED_RCV
+    cause_code: UNPOSTED_RECEIPT
+    deterministic_rule: "variance_units > 0 and no duplicate dispatch or UOM factor match"
+    severity: medium
+  - id: CHK_UNRECORDED_XFER
+    cause_code: UNRECORDED_TRANSFER
+    deterministic_rule: "variance_units < 0 and bin_location active across multi-warehouse shuttle window"
+    severity: high
+  - id: CHK_CUTOFF_WINDOW
+    cause_code: CUTOFF_TIMING
+    deterministic_rule: "transaction timestamp within 24h of cycle count cutoff window"
+    severity: medium

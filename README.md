@@ -196,6 +196,8 @@ python -m app.Home
 
 Open http://127.0.0.1:5000. The first screen loads a synthetic warehouse. To try the full import, upload `fixtures/tier2.xlsx` or one of the messy fixtures, review the mapped fields and select **Confirm & analyze**. Uploaded runs are held in the local server process. Feedback is appended to `data/feedback.jsonl` and can be disabled with `AUTOPSY_FEEDBACK=0`.
 
+The dashboard treats item costs as USD for display. The language selector switches displayed amounts to USD (English), UZS (Uzbek in either script), RUB, TRY, KZT, CNY, EUR (Spanish), or SAR (Arabic). The browser fetches the latest published [Frankfurter reference rate](https://frankfurter.dev/) and displays its date. Amounts fall back to USD if a rate is unavailable. CSV exports retain source amounts.
+
 ## Evaluation and trust
 
 Nothing ships unless `python -m eval.run_all` regenerates the number that claims it. The harness reports, per cause and per difficulty:
@@ -212,6 +214,18 @@ Nothing ships unless `python -m eval.run_all` regenerates the number that claims
 | **Weakest cause** | Named explicitly, including when its support is too thin to claim anything |
 
 Datasets are split into **dev**, **validation**, and **blind** sets. Blind seeds are owned by the generator/eval lead and never read by the solver author. Two consecutive runs from a clean data directory must produce identical metrics.
+
+### Optional raw CSV LLM baseline
+
+The default evaluator makes no LLM calls. To compare Autopsy and a JSON-mode OpenAI model on the same generated dataset, set `OPENAI_API_KEY` in your environment and run:
+
+```bash
+python -m generator.make --seed 2025 --out data/gen/llm-baseline
+python -m eval.run --dataset data/gen/llm-baseline
+python -m eval.raw_csv_llm --dataset data/gen/llm-baseline --model YOUR_MODEL --send-synthetic-csv
+```
+
+The explicit opt-in sends the verified synthetic movements, counts and item master CSVs to the API. Labels and the manifest stay local. The script prints the model name, dataset hash and results from the shared evaluator. The API call uses the full CSVs in one request and is subject to the selected model's context limits and pricing.
 
 ### Where it breaks
 

@@ -209,10 +209,14 @@ def find_case(run_id, case_id):
 def replay_view(run_id, case_id, index):
     from app.replay_view import compare
 
-    case = find_case(run_id, case_id)
+    try:
+        run = data_source.get_run(run_id)
+    except KeyError:
+        return jsonify(error="Replay unavailable."), 404
+    case = next((case for case in run.evidence if case.id == case_id), None)
     if case is None or not case.anchored or index >= len(case.hypotheses):
         return jsonify(error="Replay unavailable."), 404
-    return jsonify(compare(data_source.get_run(run_id), case, case.hypotheses[index]))
+    return jsonify(compare(run, case, case.hypotheses[index]))
 
 
 @app.post("/api/runs/<run_id>/cases/<case_id>/feedback")

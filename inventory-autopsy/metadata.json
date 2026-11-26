@@ -1,0 +1,6 @@
+{
+  "name": "Inventory Autopsy",
+  "description": "Minimum-effort, evidence-verified autonomous inventory investigation and resolution platform for wholesale distributors.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

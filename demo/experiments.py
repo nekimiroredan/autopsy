@@ -19,11 +19,11 @@ def alter(movements, txn_id, kind, destination):
     if index is None or kind not in ERROR_TYPES:
         raise ValueError("Choose a valid transaction and error type.")
     original = movements[index]
+    if not original.qty_delta:
+        raise ValueError("Choose a transaction with a nonzero quantity.")
     if kind == "wrong_location":
         if destination == original.location or not any(row.location == destination for row in movements):
             raise ValueError("Choose a different location from this run.")
-    elif not original.qty_delta:
-        raise ValueError("Choose a transaction with a nonzero quantity.")
     rows, _, _ = corrupt([row.model_dump() for row in movements], index, kind, destination)
     if kind == "double_scan":
         rows[index + 1]["txn_id"] = f"DEMO-{uuid4().hex}"

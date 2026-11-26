@@ -11,33 +11,38 @@ const icons = {
   shield: '<path d="m12 3 8 3v5c0 5-4 8-8 10-4-2-8-5-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/>',
   menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8v.1"/>',
-  box: '<path d="m12 3 8 4v10l-8 4-8-4V7l8-4Zm-8 4 8 4 8-4m-8 4v10"/>',
-  money: '<path d="M12 3v18m4-14H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H7"/>',
-  check: '<path d="m4 12 5 5L20 6"/>',
-  pause: '<path d="M9 6v12m6-12v12"/>',
   arrow: '<path d="M4 12h15m-6-6 6 6-6 6"/>',
 };
 
-const locale = document.documentElement.lang;
-const messages = JSON.parse(document.querySelector("#messages").textContent);
+let locale = document.documentElement.lang;
+let messages = JSON.parse(document.querySelector("#messages").textContent);
 const t = (key, values = {}) => (messages[key] ?? key).replace(/\{(\w+)\}/g, (_, name) => values[name]);
 const ht = (key, values) => esc(t(key, values));
 const namespace = prefix => Object.fromEntries(Object.entries(messages)
   .filter(([key]) => key.startsWith(prefix))
   .map(([key, value]) => [key.slice(prefix.length), value]));
-const pages = namespace("page.");
-const labels = namespace("cause.");
+let pages = namespace("page.");
+let labels = namespace("cause.");
 const main = document.querySelector("main");
-const number = new Intl.NumberFormat(locale, {maximumFractionDigits: 2});
-const dollars = new Intl.NumberFormat(locale, {style: "currency", currency: "USD", maximumFractionDigits: 2});
-const date = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeZone: "UTC"});
-const dateShort = new Intl.DateTimeFormat(locale, {month: "short", day: "numeric", timeZone: "UTC"});
+const currencies = {en: "USD", uz: "UZS", "uz-Cyrl": "UZS", ru: "RUB", tr: "TRY", kk: "KZT", zh: "CNY", es: "EUR", ar: "SAR"};
+const currencyFormat = currency => new Intl.NumberFormat(locale, {style: "currency", currency, currencyDisplay: "code"});
+let number, date, dateShort, displayMoney;
+let rate = 1;
+let rateRequest;
+function setFormats() {
+  number = new Intl.NumberFormat(locale, {maximumFractionDigits: 2});
+  date = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeZone: "UTC"});
+  dateShort = new Intl.DateTimeFormat(locale, {month: "short", day: "numeric", timeZone: "UTC"});
+  rate = 1;
+  displayMoney = currencyFormat("USD");
+}
+setFormats();
 const dateText = value => date.format(new Date(value.slice(0, 10)));
 const format = value => value == null ? "—" : number.format(value);
-const money = value => value == null ? "—" : dollars.format(value);
+const money = value => value == null ? "—" : `<bdi data-usd="${esc(value)}">${esc(displayMoney.format(value * rate))}</bdi>`;
 const pct = value => value == null ? "—" : new Intl.NumberFormat(locale, {style: "percent", maximumFractionDigits: 1}).format(value);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[char]));
-const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || ""}</svg>`;
+const icon = name => `<svg class="${name === "arrow" ? "icon-directional" : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || ""}</svg>`;
 const chip = (name, accent = false) => `<span class="chip ${accent ? "accent" : ""}">${esc(name)}</span>`;
 const button = (name, href, symbol, primary = false) => `<a class="btn ${primary ? "primary" : ""}" href="${esc(href)}">${icon(symbol)} ${esc(name)}</a>`;
 const exportButtons = () => {
@@ -45,9 +50,9 @@ const exportButtons = () => {
   return button(t("ui.csv"), path, "download") +
     button(t("ui.csvLocal"), path + "&headers=localized", "download");
 };
-const hero = (section, title, subtitle, actions = "") => `<div class="hero"><div><p class="eyebrow">${section}</p><h1>${title}</h1><p>${subtitle}</p></div><div class="actions">${actions}</div></div>`;
+const hero = (section, title, subtitle, actions = "") => `<div class="hero"><div>${section ? `<p class="eyebrow">${section}</p>` : ""}<h1>${title}</h1><p>${subtitle}</p></div><div class="actions">${actions}</div></div>`;
 const panel = (title, subtitle, body, aside = "") => `<section class="panel"><div class="panel-head"><div><h2>${title}</h2>${subtitle ? `<p>${subtitle}</p>` : ""}</div>${aside}</div>${body}</section>`;
-const stat = (name, value, detail, symbol) => `<div class="stat"><div class="stat-head"><span class="label">${name}</span><span>${icon(symbol)}</span></div><strong>${value}</strong><small>${detail}</small></div>`;
+const stat = (name, value, detail) => `<div class="stat"><span class="label">${name}</span><strong>${value}</strong><small>${detail}</small></div>`;
 const empty = content => `<div class="empty">${content}</div>`;
 const cause = row => row.anchored ? row.hypotheses[0]?.cause : "opening_balance";
 const rank = row => row.value_at_risk ?? Math.abs(row.gap);
@@ -62,9 +67,9 @@ let inspection;
 let renderInProgress = 0;
 let toastTimeout;
 
-async function api(path, options) {
+async function api(path, options, language = locale) {
   const url = new URL(path, location.origin);
-  url.searchParams.set("lang", locale);
+  url.searchParams.set("lang", language);
   const response = await fetch(url, options);
   const payload = await response.json().catch(() => null);
   if (!response.ok) throw new Error(payload?.error || t("ui.the_request_failed"));
@@ -93,7 +98,7 @@ function caseTable(rows) {
     rows.map(row => {
       const h = row.hypotheses[0];
       return [
-        `<a class="case-link" href="${caseHref(row)}">${esc(row.id)}</a>`, esc(row.item), esc(row.location),
+        `<a class="case-link" href="${caseHref(row)}"><bdi>${esc(row.id)}</bdi></a>`, `<bdi>${esc(row.item)}</bdi>`, `<bdi>${esc(row.location)}</bdi>`,
         `<span class="num">${row.anchored ? format(row.gap) : "—"}</span>`,
         `<span class="num">${row.value_at_risk !== null ? money(row.value_at_risk) : row.anchored ? t("ui.units", {v1: format(Math.abs(row.gap))}) : "—"}</span>`,
         esc(row.abstain && row.anchored ? "—" : labels[cause(row)] || "—"),
@@ -104,31 +109,31 @@ function caseTable(rows) {
     }));
 }
 
-function lineChart(series, {max, percent = false, ideal = false, axisPercent = false} = {}) {
+function lineChart(series, {max, percent = false, ideal = false, axisPercent = false, markPeak = false} = {}) {
   if (!series.length) return empty(t("ui.no_observations_to_plot"));
-  const w = 590, h = 179, left = 42, right = 570, top = 13, bottom = 149;
+  const w = 460, h = 174, left = 34, right = 424, top = 12, bottom = 144;
   const upper = max || Math.max(4, Math.ceil(Math.max(...series.map(point => point.y)) / 4) * 4);
   const x = (point, index) => left + (right - left) * (point.x ?? (series.length === 1 ? .5 : index / (series.length - 1)));
   const y = point => bottom - (bottom - top) * point.y / upper;
   const points = series.map((point, index) => `${x(point, index)},${y(point)}`).join(" ");
   const grid = Array.from({length: 5}, (_, index) => {
     const value = upper * index / 4;
-    return `<path class="grid" d="M${left} ${y({y: value})}H${right}"/><text x="${left - 8}" y="${y({y: value}) + 3}" text-anchor="end">${percent ? pct(value) : format(value)}</text>`;
+    return `<path class="grid" d="M${left} ${y({y: value})}H${right}"/><text x="${left - 8}" y="${y({y: value}) + 3}" direction="ltr" text-anchor="end">${percent ? pct(value) : format(value)}</text>`;
   }).join("");
+  const peak = markPeak ? series.reduce((best, point) => point.y > best.y ? point : best) : null;
   const marks = series.map((point, index) => {
     const label = point.label ?? format(point.y);
-    return `<circle cx="${x(point, index)}" cy="${y(point)}" r="${series.length > 21 ? 2 : 3.4}" fill="#ff4b00"><title>${esc(label)} · ${percent ? pct(point.y) : format(point.y)}</title></circle>`;
+    return `<circle class="chart-point${point === peak ? " chart-peak" : ""}" cx="${x(point, index)}" cy="${y(point)}" r="${point === peak ? 5 : 2.5}"><title>${esc(label)} · ${percent ? pct(point.y) : format(point.y)}</title></circle>`;
   }).join("");
   const ticks = axisPercent ? Array.from({length: 5}, (_, i) =>
-    `<text x="${left + (right - left) * i / 4}" y="172" text-anchor="middle">${pct(i / 4)}</text>`).join("") : "";
+    `<text x="${left + (right - left) * i / 4}" y="166" text-anchor="middle">${pct(i / 4)}</text>`).join("") : "";
   const captions = series.filter(point => point.tick).map(point => {
     const index = series.indexOf(point);
-    return `<text x="${x(point, index)}" y="172" text-anchor="middle">${esc(point.tick)}</text>`;
+    return `<text x="${x(point, index)}" y="166" text-anchor="middle">${esc(point.tick)}</text>`;
   }).join("");
   return `<div class="chart"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${ht("ui.line_chart")}">
-    <defs><linearGradient id="trend-fill" x2="0" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#ff4b00" stop-opacity=".25"/><stop offset="1" stop-color="#ff4b00" stop-opacity=".015"/></linearGradient></defs>
-    ${grid}${ideal ? `<path d="M${left} ${bottom} ${right} ${top}" stroke="#888" stroke-dasharray="4 5"/>` : `<polygon fill="url(#trend-fill)" points="${x(series[0], 0)},${bottom} ${points} ${x(series.at(-1), series.length - 1)},${bottom}"/>`}
-    <polyline points="${points}" stroke="#ff4b00" stroke-width="2.3" fill="none" stroke-linejoin="round"/>${marks}${captions}${ticks}</svg></div>`;
+    ${grid}${ideal ? `<path d="M${left} ${bottom} ${right} ${top}" stroke="#888" stroke-dasharray="4 5"/>` : `<polygon class="chart-area" points="${x(series[0], 0)},${bottom} ${points} ${x(series.at(-1), series.length - 1)},${bottom}"/>`}
+    <polyline points="${points}" class="chart-line" stroke-width="2" fill="none" stroke-linejoin="round"/>${marks}${captions}${ticks}</svg></div>`;
 }
 
 function trend(cases) {
@@ -168,19 +173,20 @@ function overview() {
   const priced = anchored.filter(row => row.value_at_risk !== null);
   const risk = priced.length ? money(priced.reduce((sum, row) => sum + row.value_at_risk, 0)) :
     t("ui.units", {v1: format(anchored.reduce((sum, row) => sum + Math.abs(row.gap), 0))});
-  return hero(t("ui.brand"), t("ui.overview"), t("ui.investigate_stock_discrepancies_and_trace_each_diagnosis_back_to_the_ledger"),
-    `<button type="button" class="btn" id="sample">${ht("ui.sample")}</button>` +
-    exportButtons() + button(t("page.upload"), "#upload", "upload", true)) +
+  return hero("", t("ui.overview"), t("ui.investigate_stock_discrepancies_and_trace_each_diagnosis_back_to_the_ledger"),
+    button(t("page.upload"), "#upload", "upload", true) +
+    `<button type="button" class="btn" id="sample">${ht("ui.sample")}</button>`) +
     (runId === "demo" ? `<div class="banner">${icon("info")}<span><strong>${ht("ui.synthetic_demo_data")}</strong> ${ht("ui.explore_a_simulated_warehouse_before_uploading_your_own_files")}</span></div>` :
       run.source.startsWith("Partial") ? `<div class="banner">${icon("info")}<span><strong>${ht("ui.partial_adapted_public_data")}</strong> ${ht("ui.retail_orders_serve_as_picks_inventory_counts_and_locations_are_simulated")}</span></div>` : "") +
-    `<div class="stats">${stat(t("page.discrepancies"), format(anchored.length), t("ui.movements_replayed", {v1: format(run.transactions)}), "scan")}
-    ${stat(priced.length ? t("ui.value_at_risk") : t("ui.units_at_risk"), risk, priced.length ? t("ui.priced_discrepancies", {v1: format(priced.length)}) : t("ui.absolute_count_differences"), "money")}
-    ${stat(t("ui.diagnosed"), format(diagnosed), t("ui.of_anchored_discrepancies", {v1: anchored.length ? pct(diagnosed / anchored.length) : pct(0)}), "check")}
-    ${stat(t("ui.abstained"), format(run.cases.length - diagnosed), t("ui.without_an_opening_count", {v1: format(run.cases.length - anchored.length)}), "pause")}</div>
-    <div class="split">${panel(t("ui.discrepancy_trend"), t("ui.anchored_discrepancies_by_count_date"), lineChart(trend(anchored)), chip(run.start && run.end ? `${dateText(run.start)} – ${dateText(run.end)}` : t("ui.no_period")))}
+    `<div class="stats">${stat(t("page.discrepancies"), format(anchored.length), t("ui.movements_replayed", {v1: format(run.transactions)}))}
+    ${stat(priced.length ? t("ui.value_at_risk") : t("ui.units_at_risk"), risk, priced.length ? t("ui.priced_discrepancies", {v1: format(priced.length)}) : t("ui.absolute_count_differences"))}
+    ${stat(t("ui.diagnosed"), format(diagnosed), t("ui.of_anchored_discrepancies", {v1: anchored.length ? pct(diagnosed / anchored.length) : pct(0)}))}
+    ${stat(t("ui.abstained"), format(run.cases.length - diagnosed), t("ui.without_an_opening_count", {v1: format(run.cases.length - anchored.length)}))}</div>
+    <div class="split">${panel(t("ui.discrepancy_trend"), t("ui.anchored_discrepancies_by_count_date"), lineChart(trend(anchored), {markPeak: true}), chip(run.start && run.end ? `${dateText(run.start)} – ${dateText(run.end)}` : t("ui.no_period")))}
     ${panel(t("ui.leading_hypotheses"), t("ui.top_ranked_candidates_across_anchored_cases"), causeBars(anchored), chip(t("ui.tier", {v1: run.tier}), true))}</div>` +
     panel(t("ui.priority_discrepancies"), t("ui.ranked_by_value_at_risk_where_item_costs_are_available"),
-      caseTable(sortCases(anchored).slice(0, 5)), button(t("ui.view_all"), "#discrepancies", "arrow"));
+      caseTable(sortCases(anchored).slice(0, 5)) + `<div class="actions panel-footer">${exportButtons()}</div>`,
+      button(t("ui.view_all"), "#discrepancies", "arrow"));
 }
 
 function discrepancies() {
@@ -239,10 +245,10 @@ function autopsy(caseId) {
     <button class="btn" type="submit" name="correct" value="false">${ht("ui.wrong")}</button></div></form>` : "";
   return hero(t("ui.investigation"), t("ui.autopsy_label", {v1: esc(row.id)}), `${esc(row.item)} / ${esc(row.location)} · ${row.window[0] ? dateText(row.window[0]) + " – " : t("ui.counted_label")}${dateText(row.window[1])}`,
     button(t("ui.discrepancy_register"), "#discrepancies", "arrow")) +
-    `<div class="stats">${stat(t("ui.expected"), format(row.expected), t("ui.ledger_quantity"), "box")}
-      ${stat(t("ui.counted"), format(row.counted), t("ui.physical_quantity"), "scan")}
-      ${stat(t("ui.gap"), row.anchored ? format(row.gap) : "—", t("ui.counted_minus_expected"), "activity")}
-      ${stat(t("ui.value_at_risk"), money(row.value_at_risk), t("ui.tier", {v1: row.tier}), "money")}</div>
+    `<div class="stats">${stat(t("ui.expected"), format(row.expected), t("ui.ledger_quantity"))}
+      ${stat(t("ui.counted"), format(row.counted), t("ui.physical_quantity"))}
+      ${stat(t("ui.gap"), row.anchored ? format(row.gap) : "—", t("ui.counted_minus_expected"))}
+      ${stat(t("ui.value_at_risk"), money(row.value_at_risk), t("ui.tier", {v1: row.tier}))}</div>
     <div class="split">${panel(row.abstain ? t("ui.why_autopsy_abstained") : t("ui.case_summary"), "", `<div class="panel-body"><p>${esc(row.narrative)}</p>${row.limitations.length ? `<ul>${row.limitations.map(limit => `<li>${esc(limit)}</li>`).join("")}</ul>` : ""}</div>`,
       chip(row.abstain ? t("ui.abstained") : t("ui.diagnosed"), !row.abstain))}
     ${panel(t("ui.recommended_check"), "", `<div class="panel-body">${check}${feedback}</div>`)}</div>
@@ -250,7 +256,8 @@ function autopsy(caseId) {
     ${row.anchored && h ? panel(t("ui.balance_and_ledger_diff"), "", `<div class="panel-body">
       <div class="filter"><label>${ht("ui.hypothesis")}<select id="replay-hypothesis">${row.hypotheses.map((entry, index) => `<option value="${index}">${esc(labels[entry.cause])}</option>`).join("")}</select></label>
       <label><input type="checkbox" id="replay-apply"> ${ht("ui.apply")}</label></div>
-      <div id="replay-view" aria-live="polite"></div></div>`) : ""}
+      <div id="replay-view" aria-live="polite"></div></div>`) : row.anchored ?
+      `<section class="panel"><div class="panel-body">${gapWaterfall(row, row)}</div></section>` : ""}
     ${panel(t("ui.ask_about_the_evidence"), "", `<div class="panel-body"><form id="question" class="actions"><input name="question" aria-label="${ht("ui.question")}" required maxlength="400" placeholder="${ht("question.check")}"><button class="btn">${ht("ui.ask")}</button></form><div id="answer" role="status"></div></div>`)}</div>`;
 }
 
@@ -286,13 +293,14 @@ function bindAutopsy() {
 }
 
 function balanceChart({points, gap}, comparison) {
-  const start = Date.parse(points[0].ts + "Z");
-  const end = Date.parse(points.at(-1).ts + "Z");
+  const time = point => Date.parse(point.ts + "Z");
+  const start = Math.min(time(points[0]), time(comparison.points[0]));
+  const end = Math.max(time(points.at(-1)), time(comparison.points.at(-1)));
   const quantities = [...points, ...comparison.points].map(point => point.quantity);
   const min = quantities.reduce((low, value) => Math.min(low, value));
   const max = quantities.reduce((high, value) => Math.max(high, value));
   const coords = points.map(point => [
-    16 + 558 * (Date.parse(point.ts + "Z") - start) / (end - start),
+    16 + 558 * (time(point) - start) / (end - start || 1),
     130 - 110 * (point.quantity - min) / (max - min || 1),
   ]);
   const lastLedgerPoint = coords.at(-2);
@@ -300,8 +308,8 @@ function balanceChart({points, gap}, comparison) {
   const path = coords.slice(0, -1).map(([x, y], index) => index ? `H${x}V${y}` : `M${x} ${y}`).join("");
   return `<svg class="replay-chart" viewBox="0 0 590 150" role="img" aria-label="${ht("ui.running_ledger_balance_across_the_count_window")}">
     <path d="${path}" fill="none" stroke="currentColor" stroke-width="2"/>
-    <path d="M${lastLedgerPoint.join(" ")}V${physicalCount[1]}" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="4 3"/>
-    <circle cx="${physicalCount[0]}" cy="${physicalCount[1]}" r="4" fill="currentColor"/>
+    <path class="replay-gap" d="M${lastLedgerPoint.join(" ")}V${physicalCount[1]}" fill="none" stroke-width="3" stroke-dasharray="4 3"/>
+    <circle class="replay-count" cx="${physicalCount[0]}" cy="${physicalCount[1]}" r="4"/>
     </svg><p>${ht("ui.expected_at_count_expected_physical_count_counted_gap_gap", {expected: format(points.at(-2).quantity), counted: format(points.at(-1).quantity), gap: format(gap)})}</p>`;
 }
 
@@ -309,11 +317,11 @@ function gapWaterfall(before, after, label) {
   const total = Math.abs(before.gap);
   const residual = Math.abs(after.gap);
   const explained = total - residual;
-  const scale = total || 1;
+  const scale = Math.max(total, residual) || 1;
   const bar = (name, amount, offset) => `<div><div class="bar-title"><span>${esc(name)}</span><strong>${format(amount)}</strong></div>
     <div class="track"><i style="margin-inline-start:${Math.max(offset, 0) / scale * 100}%;width:${Math.abs(amount) / scale * 100}%"></i></div></div>`;
   return `<h3>${ht("ui.gap_waterfall")}</h3><div class="bars">${bar(t("ui.total_gap_magnitude"), total, 0)}
-    ${bar(label, explained, Math.min(residual, total))}${bar(t("ui.unexplained_needs_recount"), residual, 0)}</div>`;
+    ${label ? bar(label, explained, Math.min(residual, total)) : ""}${bar(t("ui.unexplained_needs_recount"), residual, 0)}</div>`;
 }
 
 function ledgerDiff(edits) {
@@ -339,7 +347,9 @@ function bindReplay(base) {
   let requestNumber = 0;
   let data;
   const draw = () => {
-    if (data) view.innerHTML = balanceChart(apply.checked ? data.after : data.before, data.before) +
+    if (!data) return;
+    const [visible, other] = apply.checked ? [data.after, data.before] : [data.before, data.after];
+    view.innerHTML = balanceChart(visible, other) +
       gapWaterfall(data.before, data.after, hypothesis.selectedOptions[0].textContent) + ledgerDiff(data.edits);
   };
   const load = async () => {
@@ -371,25 +381,37 @@ async function bindExperiment() {
   const body = document.querySelector("#experiment-body");
   const base = `/api/runs/${runId}`;
   try {
-    const rows = await api(base + "/transactions");
+    const transactions = await api(base + "/transactions");
+    const rows = transactions.filter(row => row.qty_delta !== 0);
     if (!rows.length) {
       body.textContent = t("ui.this_run_has_no_transactions");
       return;
     }
-    const locations = [...new Set(rows.map(row => row.location))].sort();
+    const locations = [...new Set(transactions.map(row => row.location))].sort();
+    const kinds = locations.length > 1 ? ["double_scan", "qty_typo", "wrong_location"] : ["double_scan", "qty_typo"];
     body.innerHTML = `<form class="filter">
       <label>${ht("ui.transaction")}<select name="txn_id">${rows.map(row => `<option value="${esc(row.txn_id)}">${esc(row.txn_id)} · ${esc(row.item)} · ${esc(row.location)} · ${format(row.qty_delta)}</option>`).join("")}</select></label>
-      <label>${ht("ui.error_type")}<select name="kind">${["double_scan", "qty_typo", "wrong_location"].map(kind => `<option value="${kind}">${esc(labels[kind])}</option>`).join("")}</select></label>
-      <label id="experiment-destination" hidden>${ht("ui.destination")}<select name="destination">${locations.map(location => `<option>${esc(location)}</option>`).join("")}</select></label>
+      <label>${ht("ui.error_type")}<select name="kind">${kinds.map(kind => `<option value="${kind}">${esc(labels[kind])}</option>`).join("")}</select></label>
+      <label id="experiment-destination" hidden>${ht("ui.destination")}<select name="destination"></select></label>
       <button class="btn primary">${ht("ui.run_experiment")}</button>
       </form><div id="experiment-result" role="status"></div>`;
     const form = body.querySelector("form");
     const destination = body.querySelector("#experiment-destination");
     const result = body.querySelector("#experiment-result");
     const button = form.querySelector("button");
-    form.elements.kind.addEventListener("change", () => {
+    const updateDestination = () => {
+      const select = form.elements.destination;
+      const current = select.value;
+      const origin = rows[form.elements.txn_id.selectedIndex].location;
+      select.replaceChildren(...locations.filter(location => location !== origin).map(location => new Option(location)));
+      if (current && current !== origin) select.value = current;
       destination.hidden = form.elements.kind.value !== "wrong_location";
+      select.disabled = destination.hidden;
+    };
+    form.addEventListener("change", event => {
+      if (event.target !== form.elements.destination) updateDestination();
     });
+    updateDestination();
     form.addEventListener("submit", async event => {
       event.preventDefault();
       const payload = Object.fromEntries(new FormData(form));
@@ -623,7 +645,8 @@ function bindHotspots() {
 
 function trustView() {
   const title = hero(t("ui.evaluation"), t("page.trust"), t("ui.review_reproducible_synthetic_benchmarks_calibration_and_coverage"));
-  if (!trust) return title + panel(t("ui.evaluation_unavailable"), "", empty(t("ui.generate_the_evaluation_artifacts_with_code_python_m_eval_run_all_code_then_refresh_this_page")));
+  const notice = `<div class="banner">${icon("info")}<span><strong>${ht("ui.synthetic_data")}</strong> ${ht("ui.detection_f1_is_by_construction_the_benchmark_counts_observable_gaps_created_by_the_generator_and_checks_whether_ledger_replay_flags_them_real_warehouse_performance_needs_field_validation")}</span></div>`;
+  if (!trust) return title + notice + panel(t("ui.evaluation_unavailable"), "", empty(t("ui.generate_the_evaluation_artifacts_with_code_python_m_eval_run_all_code_then_refresh_this_page")));
   const metrics = trust.metrics ?? trust;
   const overall = metrics.summary?.overall ?? metrics.summary ?? {};
   const reliability = metrics.reliability?.blind ?? metrics.reliability ?? {};
@@ -633,9 +656,10 @@ function trustView() {
   const byCause = Array.isArray(metrics.by_cause) ? metrics.by_cause : [];
   const gates = Object.entries(metrics.gates ?? {}).map(([key, gate]) =>
     [esc(key), format(gate.actual), format(gate.target), chip(gate.pass ? t("ui.passed") : t("ui.missed"), !gate.pass)]);
-  const missed = Object.entries(metrics.gates ?? {}).filter(([, gate]) => !gate.pass);
-  const thresholds = Object.entries(metrics.coverage_at_threshold_by_difficulty ?? {}).flatMap(([difficulty, rows]) =>
-    rows.map(row => [esc(difficulty), pct(row.threshold), pct(row.coverage), pct(row.accuracy), format(row.support)]));
+  const missed = trust.missed_gates;
+  const thresholds = ["easy", "medium", "hard"].flatMap(difficulty =>
+    (metrics.coverage_at_threshold_by_difficulty?.[difficulty] ?? []).map(row =>
+      [esc(difficulty), pct(row.threshold), pct(row.coverage), pct(row.accuracy), format(row.support)]));
   const curve = trustCurve();
   const comparisons = (mapping = {}) => table([t("ui.variant"), t("ui.top_1"), t("ui.coverage"), "Δ Top 1", t("ui.status")],
     Object.entries(mapping).map(([key, row]) =>
@@ -647,11 +671,11 @@ function trustView() {
         esc(Object.entries(value).map(([field, metric]) => `${field.replaceAll("_", " ")} ${typeof metric === "number" ? format(metric) : typeof metric === "object" ? JSON.stringify(metric) : metric}`).join(" · ")) :
         esc(value === null ? "—" : value)]));
   };
-  return title + `<div class="banner">${icon("info")}<span><strong>${ht("ui.synthetic_data")}</strong> ${ht("ui.detection_f1_is_by_construction_the_benchmark_counts_observable_gaps_created_by_the_generator_and_checks_whether_ledger_replay_flags_them_real_warehouse_performance_needs_field_validation")}</span></div>
-    <div class="stats">${stat(t("ui.detection_f1"), pct(overall.detection_f1 ?? overall.detection?.f1), t("ui.discrepancy_detection"), "scan")}
-      ${stat(t("ui.top_1_accuracy"), pct(overall.top1 ?? overall.top_1), t("ui.single_cause_windows"), "target")}
-      ${stat(t("ui.coverage"), pct(overall.coverage), t("ui.cases_with_a_selected_cause"), "activity")}
-      ${stat(t("ui.blind_ece"), pct(reliability.ece), t("ui.expected_calibration_error"), "shield")}</div>
+  return title + notice + `
+    <div class="stats">${stat(t("ui.detection_f1"), pct(overall.detection_f1 ?? overall.detection?.f1), t("ui.discrepancy_detection"))}
+      ${stat(t("ui.top_1_accuracy"), pct(overall.top1 ?? overall.top_1), t("ui.single_cause_windows"))}
+      ${stat(t("ui.coverage"), pct(overall.coverage), t("ui.cases_with_a_selected_cause"))}
+      ${stat(t("ui.blind_ece"), pct(reliability.ece), t("ui.expected_calibration_error"))}</div>
     <div class="split">${panel(t("ui.reliability"), t("ui.calibrated_probability_vs_observed_accuracy"), lineChart(bins, {max: 1, percent: true, ideal: true, axisPercent: true}))}
     ${panel(t("ui.coverage_vs_accuracy"), t("ui.selective_accuracy_as_more_cases_are_answered"), lineChart(coverage, {max: 1, percent: true, axisPercent: true}))}</div>
     <div class="stack">${panel(t("ui.trust_dial"), t("ui.choose_a_measured_point_from_the_stored_coverage_curve_tied_confidence_scores_may_share_a_threshold"),
@@ -666,8 +690,8 @@ function trustView() {
     ${panel(t("ui.ablations"), "", comparisons(metrics.ablations))}
     ${panel(t("ui.evaluation_gates"), "", gates.length ? table([t("ui.gate"), t("ui.observed"), t("ui.threshold"), t("ui.status")], gates) : empty(t("ui.no_gate_results")))}
     ${panel(t("ui.missed_gates_and_known_limitations"), t("ui.from_the_published_evaluation_report"),
-      `<div class="panel-body">${missed.length ? table([t("ui.missed_gate"), t("ui.observed"), t("ui.threshold")], missed.map(([name, gate]) =>
-        [esc(name), pct(gate.actual), pct(gate.target)])) : `<p>${ht("ui.no_missed_gates_reported")}</p>`}
+      `<div class="panel-body">${missed?.length ? table([t("ui.missed_gate"), t("ui.observed"), t("ui.threshold")], missed.map(gate =>
+        [esc(gate.name), esc(gate.measured), esc(gate.target)])) : missed ? `<p>${ht("ui.no_missed_gates_reported")}</p>` : ""}
         ${trust.limitations?.length ? trust.limitations.map(line => `<p>${esc(line)}</p>`).join("") : empty(t("ui.no_published_limitations_available"))}</div>`)}</div>`;
 }
 
@@ -714,7 +738,10 @@ async function render() {
   }
   document.body.classList.remove("menu-open");
   try {
-    if (page === "trust") trust = await api("/api/trust");
+    if (page === "trust") {
+      main.innerHTML = empty(ht("ui.loading"));
+      trust = await api("/api/trust");
+    }
     if (token !== renderInProgress) return;
     const renderer = {overview, discrepancies, autopsy, upload, hotspots, trust: trustView, experiment: experimentView}[page];
     main.innerHTML = renderer(caseId);
@@ -722,7 +749,7 @@ async function render() {
     if (bind) bind();
     window.scrollTo(0, 0);
   } catch (error) {
-    main.innerHTML = empty(esc(error.message));
+    if (token === renderInProgress) main.innerHTML = empty(esc(error.message));
   }
 }
 
@@ -752,7 +779,39 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape") document.body.classList.remove("menu-open");
 });
 
+async function loadDisplayCurrency() {
+  rateRequest?.abort();
+  const request = new AbortController();
+  rateRequest = request;
+  const currency = currencies[locale] ?? "USD";
+  const status = document.querySelector("#display-currency");
+  status.textContent = "USD";
+  if (currency === "USD") return;
+  status.textContent = `USD → ${currency}…`;
+  try {
+    const response = await fetch(`https://api.frankfurter.dev/v2/rate/USD/${currency}`, {
+      signal: AbortSignal.any([request.signal, AbortSignal.timeout(5000)]),
+    });
+    if (!response.ok) throw new Error("Exchange rate unavailable");
+    const quote = await response.json();
+    if (request.signal.aborted) return;
+    if (quote.base !== "USD" || quote.quote !== currency || !Number.isFinite(quote.rate) || quote.rate <= 0 ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(quote.date)) throw new Error("Invalid exchange rate");
+    const quoteDate = dateText(quote.date);
+    rate = quote.rate;
+    displayMoney = currencyFormat(currency);
+    status.textContent = `${currency} · ${quoteDate}`;
+    for (const element of main.querySelectorAll("[data-usd]")) {
+      element.textContent = displayMoney.format(Number(element.dataset.usd) * rate);
+    }
+  } catch {
+    if (!request.signal.aborted) status.textContent = "USD";
+  }
+}
+
 async function start() {
+  languageSelect.disabled = true;
+  loadDisplayCurrency();
   try {
     const recent = sessionStorage.getItem("autopsy-run");
     if (recent) {
@@ -769,11 +828,51 @@ async function start() {
     await render();
   } catch (error) {
     main.innerHTML = empty(esc(error.message));
+  } finally {
+    languageSelect.disabled = false;
   }
 }
-document.querySelector("#language").addEventListener("change", event => {
-  const url = new URL(location.href);
-  url.searchParams.set("lang", event.target.value);
-  location.assign(url);
+const languageSelect = document.querySelector("#language");
+languageSelect.addEventListener("change", async () => {
+  const language = languageSelect.value;
+  const selectedRunId = runId;
+  languageSelect.disabled = true;
+  try {
+    const url = new URL(location.href);
+    url.searchParams.set("lang", language);
+    const [response, localizedRun] = await Promise.all([
+      fetch(url), api(`/api/runs/${selectedRunId}`, undefined, language),
+    ]);
+    if (!response.ok) throw new Error(t("ui.the_request_failed"));
+    const shell = new DOMParser().parseFromString(await response.text(), "text/html");
+    if (selectedRunId !== runId) throw new Error(t("ui.the_request_failed"));
+
+    locale = shell.documentElement.lang;
+    document.documentElement.lang = locale;
+    document.documentElement.dir = shell.documentElement.dir;
+    messages = JSON.parse(shell.querySelector("#messages").textContent);
+    pages = namespace("page.");
+    labels = namespace("cause.");
+    setFormats();
+    run = localizedRun;
+    for (const selector of [".skip", ".sidebar", ".breadcrumb > span:first-of-type"]) {
+      const replacement = shell.querySelector(selector);
+      document.querySelector(selector).replaceWith(replacement);
+      replacement.querySelectorAll("[data-icon]").forEach(node => node.innerHTML = icon(node.dataset.icon));
+    }
+    for (const selector of ["#menu", "#language"]) {
+      document.querySelector(selector).setAttribute("aria-label", shell.querySelector(selector).getAttribute("aria-label"));
+    }
+    url.hash = location.hash;
+    history.replaceState(null, "", url);
+    updateSource();
+    loadDisplayCurrency();
+    await render();
+  } catch (error) {
+    languageSelect.value = locale;
+    toast(error.message);
+  } finally {
+    languageSelect.disabled = false;
+  }
 });
 start();

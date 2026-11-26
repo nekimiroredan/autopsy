@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+from hashlib import sha256
 from pathlib import Path
 from types import SimpleNamespace
 from urllib.request import Request, urlopen
@@ -42,13 +43,24 @@ def score(dataset, predictions):
     return summarize(*samples(dataset, evidence))
 
 
-def ask(directory, model, key):
-    files = {name: (directory / name).read_text(encoding="utf-8")
-             for name in ("movements.csv", "counts.csv", "items.csv")}
+def verified_csvs(directory, hashes):
+    files = {}
+    for name in ("movements.csv", "counts.csv", "items.csv"):
+        content = (directory / name).read_bytes()
+        if sha256(content).hexdigest() != hashes.get(name):
+            raise ValueError(f"CSV does not match its synthetic dataset checksum: {name}")
+        files[name] = content.decode("utf-8")
+    return files
+
+
+def ask(files, model, key):
     instructions = (
-        "Use only the provided raw inventory CSVs. Find anchored count windows with discrepancies. "
+        "Use only the provided raw inventory CSVs. An anchored count window starts at the "
+        "previous count for the same item and location. Sum movements after that count through "
+        "the current count. Predict only windows where that balance differs from the physical count. "
         "Return a JSON object with a predictions array of objects with count_id from counts.csv "
-        "and causes (up to three ranked cause codes, or an empty list to abstain). "
+        "and causes (up to three distinct cause codes, best first). Use an empty causes list "
+        "when you detect a gap but abstain on its cause. Omit windows with no detected gap. "
         "Allowed cause codes: " + ", ".join(PRIOR_RANKING)
     )
     request = Request(
@@ -61,7 +73,12 @@ def ask(directory, model, key):
     )
     with urlopen(request, timeout=180) as response:
         content = json.load(response)["choices"][0]["message"]["content"]
-    return json.loads(content)["predictions"]
+    if not content:
+        raise ValueError("The model did not return predictions.")
+    response = json.loads(content)
+    if not isinstance(response, dict) or "predictions" not in response:
+        raise ValueError("The model response is missing its predictions array.")
+    return response["predictions"]
 
 
 def main():
@@ -76,10 +93,11 @@ def main():
     dataset = read_dataset(args.dataset, verify_hashes=True)
     if not dataset.manifest.get("generator_version"):
         parser.error("Select a dataset written by the synthetic generator.")
+    files = verified_csvs(args.dataset, dataset.manifest["hashes"])
     print(json.dumps({
         "model": args.model,
         "dataset_hash": dataset.manifest["dataset_hash"],
-        **score(dataset, ask(args.dataset, args.model, key)),
+        **score(dataset, ask(files, args.model, key)),
     }, indent=2))
 
 

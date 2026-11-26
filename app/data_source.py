@@ -88,10 +88,21 @@ def load_trust():
     result = json.loads(latest.read_text())
     report = latest.with_name("RESULTS.md")
     if report.is_file():
-        _, heading, body = report.read_text().partition("\n## Limitations\n")
-        if heading:
-            result["limitations"] = body.split("\n## ", 1)[0].strip().splitlines()
+        content = report.read_text(encoding="utf-8")
+        result["limitations"] = report_section(content, "Limitations")
+        result["missed_gates"] = []
+        for line in report_section(content, "Gates"):
+            cells = [cell.strip() for cell in line.strip("|").split("|")]
+            if len(cells) == 4 and cells[1] == "Missed":
+                result["missed_gates"].append({
+                    "name": cells[0], "measured": cells[2], "target": cells[3],
+                })
     return result
+
+
+def report_section(content, title):
+    _, heading, body = content.partition(f"\n## {title}\n")
+    return body.split("\n## ", 1)[0].strip().splitlines() if heading else []
 
 
 def shift_tiles(run):
